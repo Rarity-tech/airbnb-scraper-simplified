@@ -1,0 +1,42 @@
+name: Airbnb Scraper Simplified
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_listings:
+        description: "Nombre max d'annonces PAR page de recherche"
+        required: true
+        default: "50"
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          playwright install firefox
+          playwright install-deps firefox
+
+      - name: Run scraper
+        env:
+          MAX_LISTINGS: ${{ inputs.max_listings }}
+        run: |
+          python scrape_airbnb_fast.py
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: airbnb-hosts-data
+          path: airbnb_hosts_data.csv
+        if: always()
